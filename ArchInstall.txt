@@ -1,0 +1,147 @@
+*******************************
+***** Creating Partitions *****
+*******************************
+~ Create efi partition:
+# fdisk /dev/sda
+ * g (to create an empty GPT partition table)
+ * n
+ * 1
+ * enter
+ * +300M
+ * t
+ * 1 (For EFI)
+ * w
+
+
+Create root partition:
+# fdisk /dev/sda
+* n
+* 2
+* enter
+* +30G
+* w
+
+
+Create home partition:
+# fdisk /dev/sda
+ * n
+ * 3
+ * enter
+ * enter
+ * w
+
+*********************************
+***** Formatting partitions *****
+*********************************
+
+# mkfs.fat -F32 /dev/sda1 ~// EFI Partition
+# mkfs.ext4 /dev/sda2 ~// Root Partition
+# mkfs.ext4 /dev/sda3 ~// Home Partition
+
+
+*********************
+***** Preparing *****
+*********************
+
+# mount /dev/sda2 /mnt  ~// Mounting root
+# mkdir /mnt/home  ~// Making home in root
+# mount /dev/sda3 /mnt/home  ~// Mounting home
+
+**********************
+***** Installing *****
+**********************
+
+# pacstrap -i /mnt base base-devel
+
+*********************
+***** Finishing *****
+*********************
+
+# genfstab -U -p /mnt >> /mnt/etc/fstab
+
+##########################################################
+
+~ chroot in install
+# arch-chroot /mnt
+
+*******************************
+***** Chroot post install *****
+******************************
+
+~ Install grub
+# pacman -S base-devel grub efibootmgr dosfstools openssh os-prober mtools
+# mkdir /boot/EFI
+# mount /dev/sda1 /boot/EFI
+# grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
+# cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
+# mkdir -p /boot/grub/locale
+# grub-mkconfig -o /boot/grub/grub.cfg
+
+~ Generate locale 
+# nano /etc/locale.gen  ~// uncomment en_US.UTF-8
+# locale-gen
+
+~ Set root password
+# passwd
+
+
+~ Create swap file and swap
+# fallocate -l 6G /swapfile
+# chmod 600 /swapfile
+# mkswap /swapfile
+# echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
+
+##########################################################
+
+$ exit
+# umount -a
+# reboot
+
+##########################################################
+
+**************************************
+***** Post install after booting *****
+**************************************
+
+~ fix locale issues
+# localectl set-locale LANG="en_US.UTF-8"
+
+~ install network manager and stuff
+# pacman -Sy networkmanager network-manager-applet wireless_tools wpa_supplicant dialog wpa_actiond
+
+~ install xorg
+# pacman -S xorg xf86-input-libinput
+
+~ install drivers
+~ AMD
+# pacman -S xf86-video-amdgpu
+
+~ install desktop environment 
+~ Cinnamon
+# pacman -S cinnamon blueberry system-config-printer
+
+~ install display manager
+~ LightDM
+# pacman -S lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings
+
+~ Enable services
+~ Lightdm
+# systemctl enable lightdm.service
+~ network manager
+# systemctl enable NetworkManager.service
+
+~ Mis. packages
+# pacman -S git fish vim
+
+~ Enable sudo 
+# visudo (Uncomment %wheel ALL = ALL)
+
+~ Add user
+# useradd -m -G wheel oddlyspaced
+# passwd oddlyspaced
+
+~ Set hostname
+# hostnamectl set-hostname nyanmachine
+
+~ Reboot
+# reboot
