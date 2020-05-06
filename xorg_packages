@@ -1,0 +1,17 @@
+libevdev
+libfontenc
+libinput
+libwacom
+libxfont2
+libxmu
+libxt
+mtdev
+xorg-server-common
+xorg-setxkbmap
+xorg-xauth
+xorg-xkbcomp
+xorg-xmodmap
+xorg-xrdb
+xf86-input-libinput
+xorg-server
+xorg-xinit-1.4.1-1
